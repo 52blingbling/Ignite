@@ -8,6 +8,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -44,7 +45,7 @@ class StreakCalculationTest {
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(emptyList())
 
         val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
-        val state = viewModel.metricsState.value
+        val state = viewModel.metricsState.first { it is UiState.Success }
 
         assertTrue(state is UiState.Success)
         val metrics = (state as UiState.Success).data
@@ -69,7 +70,7 @@ class StreakCalculationTest {
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(mockRecords)
 
         val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
-        val state = viewModel.metricsState.value
+        val state = viewModel.metricsState.first { it is UiState.Success }
 
         assertTrue(state is UiState.Success)
         val metrics = (state as UiState.Success).data
@@ -93,7 +94,7 @@ class StreakCalculationTest {
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(mockRecords)
 
         val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
-        val state = viewModel.metricsState.value
+        val state = viewModel.metricsState.first { it is UiState.Success }
 
         assertTrue(state is UiState.Success)
         val metrics = (state as UiState.Success).data
@@ -118,7 +119,7 @@ class StreakCalculationTest {
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(mockRecords)
 
         val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
-        val state = viewModel.metricsState.value
+        val state = viewModel.metricsState.first { it is UiState.Success }
 
         assertTrue(state is UiState.Success)
         val metrics = (state as UiState.Success).data
