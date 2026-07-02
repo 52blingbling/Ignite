@@ -52,7 +52,9 @@ data class MissionEntity(
             title = title,
             durationMinutes = durationMinutes,
             actions = actions,
-            deferredCount = deferredCount
+            deferredCount = deferredCount,
+            createdAt = createdAt,
+            isCompleted = isCompleted
         )
     }
 
@@ -60,13 +62,13 @@ data class MissionEntity(
         /**
          * 从 Domain 模型转换回 Database 实体模型。
          */
-        fun fromDomain(domain: Mission, createdAt: Long = System.currentTimeMillis()): MissionEntity {
+        fun fromDomain(domain: Mission, defaultCreatedAt: Long = System.currentTimeMillis()): MissionEntity {
             return MissionEntity(
                 id = domain.id,
                 title = domain.title,
                 durationMinutes = domain.durationMinutes,
-                createdAt = createdAt,
-                isCompleted = false,
+                createdAt = if (domain.createdAt > 0L) domain.createdAt else defaultCreatedAt,
+                isCompleted = domain.isCompleted,
                 deferredCount = domain.deferredCount
             )
         }

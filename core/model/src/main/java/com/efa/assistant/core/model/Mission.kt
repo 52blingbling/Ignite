@@ -5,7 +5,9 @@ data class Mission(
     val title: String,
     val durationMinutes: Int,
     val actions: List<Action> = emptyList(),
-    val deferredCount: Int = 0
+    val deferredCount: Int = 0,
+    val createdAt: Long = 0L,
+    val isCompleted: Boolean = false
 )
 
 data class Action(
