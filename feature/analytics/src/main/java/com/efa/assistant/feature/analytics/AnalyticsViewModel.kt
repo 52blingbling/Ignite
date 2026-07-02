@@ -98,24 +98,26 @@ class AnalyticsViewModel @Inject constructor(
      * 聚合所有统计指标并暴露为一个 UiState 流。
      */
     val metricsState: StateFlow<UiState<BehaviorMetrics>> = combine(
-        analyticsRepository.getTotalStartCount(),
-        analyticsRepository.getLongestFocusDurationSeconds(),
-        analyticsRepository.getBestWorkingHour(),
-        analyticsRepository.getBestWorkingDayOfWeek(),
-        analyticsRepository.getMostProcrastinatedMissions(),
+        combine(
+            analyticsRepository.getTotalStartCount(),
+            analyticsRepository.getLongestFocusDurationSeconds(),
+            analyticsRepository.getBestWorkingHour(),
+            analyticsRepository.getBestWorkingDayOfWeek(),
+            analyticsRepository.getMostProcrastinatedMissions()
+        ) { a, b, c, d, e -> listOf(a, b, c, d, e) },
         recentDailyStatsFlow,
         currentStreakFlow,
         completionRate
-    ) { startCount, longestSec, bestHour, bestDay, procrastinated, dailyStats, streak, rate ->
+    ) { p1, dailyStats, streak, rate ->
         BehaviorMetrics(
-            totalStartCount = startCount,
-            completionRate = rate,
-            longestFocusMinutes = (longestSec / 60).toInt(),
-            bestWorkingHour = bestHour,
-            bestWorkingDayOfWeek = bestDay,
-            currentStreak = streak,
+            totalStartCount = p1[0] as Int,
+            longestFocusMinutes = (p1[1] as Int) / 60,
+            bestWorkingHour = p1[2] as Int?,
+            bestWorkingDayOfWeek = p1[3] as Int?,
+            mostProcrastinated = p1[4] as List<Mission>,
             recentDailyStats = dailyStats,
-            mostProcrastinated = procrastinated
+            currentStreak = streak,
+            completionRate = rate
         )
     }.map { 
         UiState.Success(it) as UiState<BehaviorMetrics> 

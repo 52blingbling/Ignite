@@ -51,7 +51,8 @@ data class MissionEntity(
             id = id,
             title = title,
             durationMinutes = durationMinutes,
-            actions = actions
+            actions = actions,
+            deferredCount = deferredCount
         )
     }
 
@@ -65,7 +66,8 @@ data class MissionEntity(
                 title = domain.title,
                 durationMinutes = domain.durationMinutes,
                 createdAt = createdAt,
-                isCompleted = false
+                isCompleted = false,
+                deferredCount = domain.deferredCount
             )
         }
     }
