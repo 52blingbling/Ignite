@@ -67,6 +67,10 @@ class StreakCalculationTest {
         )
 
         every { mockRepo.getTotalStartCount() } returns flowOf(3)
+        every { mockRepo.getLongestFocusDurationSeconds() } returns flowOf(0L)
+        every { mockRepo.getBestWorkingHour() } returns flowOf(null)
+        every { mockRepo.getBestWorkingDayOfWeek() } returns flowOf(null)
+        every { mockRepo.getMostProcrastinatedMissions() } returns flowOf(emptyList())
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(mockRecords)
 
         val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
@@ -91,6 +95,10 @@ class StreakCalculationTest {
         )
 
         every { mockRepo.getTotalStartCount() } returns flowOf(2)
+        every { mockRepo.getLongestFocusDurationSeconds() } returns flowOf(0L)
+        every { mockRepo.getBestWorkingHour() } returns flowOf(null)
+        every { mockRepo.getBestWorkingDayOfWeek() } returns flowOf(null)
+        every { mockRepo.getMostProcrastinatedMissions() } returns flowOf(emptyList())
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(mockRecords)
 
         val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
@@ -116,6 +124,10 @@ class StreakCalculationTest {
         )
 
         every { mockRepo.getTotalStartCount() } returns flowOf(2)
+        every { mockRepo.getLongestFocusDurationSeconds() } returns flowOf(0L)
+        every { mockRepo.getBestWorkingHour() } returns flowOf(null)
+        every { mockRepo.getBestWorkingDayOfWeek() } returns flowOf(null)
+        every { mockRepo.getMostProcrastinatedMissions() } returns flowOf(emptyList())
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(mockRecords)
 
         val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)

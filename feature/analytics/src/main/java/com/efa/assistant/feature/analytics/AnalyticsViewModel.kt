@@ -111,7 +111,7 @@ class AnalyticsViewModel @Inject constructor(
     ) { p1, dailyStats, streak, rate ->
         BehaviorMetrics(
             totalStartCount = p1[0] as Int,
-            longestFocusMinutes = (p1[1] as Int) / 60,
+            longestFocusMinutes = ((p1[1] as Long) / 60).toInt(),
             bestWorkingHour = p1[2] as Int?,
             bestWorkingDayOfWeek = p1[3] as Int?,
             mostProcrastinated = p1[4] as List<Mission>,
