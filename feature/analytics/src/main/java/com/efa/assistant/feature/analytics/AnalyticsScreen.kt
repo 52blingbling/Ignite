@@ -14,16 +14,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -39,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.efa.assistant.core.common.UiState
+import com.efa.assistant.core.model.Mission
 import kotlin.math.roundToInt
 
 @Composable
@@ -254,7 +257,7 @@ fun TrendChartCard(dailyStats: List<DailyStats>) {
  * 行为数据仪表盘
  */
 @Composable
-fun MetricsDashboard(data = data) {
+fun MetricsDashboard(data: BehaviorMetrics) {
     val items = listOf(
         Pair("🚀 总启动次数", "${data.totalStartCount} 次"),
         Pair("🎯 平均完成率", "${(data.completionRate * 100).roundToInt()}%"),
@@ -296,7 +299,7 @@ fun MetricsDashboard(data = data) {
                     )
                 }
                 if (index < items.size - 1) {
-                    Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
                 }
             }
         }
@@ -352,7 +355,7 @@ fun ProcrastinationAnalysisList(missions: List<Mission>) {
                     )
                 }
                 if (index < missions.size - 1) {
-                    Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.05f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.05f))
                 }
             }
         }
