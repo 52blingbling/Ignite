@@ -22,8 +22,16 @@ interface AIProvider {
     /**
      * 根据任务标题，调用 AI 并自动解析为标准的 Action 列表。
      */
-    suspend fun splitTask(missionTitle: String, promptManager: PromptManager): List<Action> {
-        val prompt = promptManager.getPrompt(PromptType.TASK_SPLIT, mapOf("mission" to missionTitle))
+    suspend fun splitTask(
+        missionTitle: String,
+        extraInstructions: String = "",
+        promptManager: PromptManager
+    ): List<Action> {
+        val instructions = if (extraInstructions.isNotBlank()) "用户附加需求：$extraInstructions" else ""
+        val prompt = promptManager.getPrompt(PromptType.TASK_SPLIT, mapOf(
+            "mission" to missionTitle,
+            "extra_instructions" to instructions
+        ))
         val rawResponse = generateText(prompt)
         return parseActionsJson(rawResponse)
     }

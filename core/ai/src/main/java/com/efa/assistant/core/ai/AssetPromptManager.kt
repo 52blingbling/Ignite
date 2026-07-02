@@ -48,7 +48,7 @@ class AssetPromptManager @Inject constructor(
     private fun getDefaultPromptFallback(type: PromptType): String {
         return when (type) {
             PromptType.TASK_SPLIT -> {
-                "你是一名专业的执行教练。请将任务拆分为 1~5 分钟的微小具体步骤：\"{mission}\"。" +
+                "将任务 \"{mission}\" 拆分为非常小、可以在 1~5 分钟内完成的具体动作。\n{extra_instructions}\n" +
                         "请严格返回以下格式的 JSON：\n" +
                         "{\n" +
                         "  \"actions\": [\n" +

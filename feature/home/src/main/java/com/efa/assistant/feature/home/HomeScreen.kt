@@ -86,12 +86,24 @@ fun HomeScreen(
             }
             is UiState.Success -> {
                 val mission = state.data
+                val draftMission by viewModel.draftMission.collectAsState()
+                val isDraftLoading by viewModel.isDraftLoading.collectAsState()
+                val recentMissions by viewModel.recentMissions.collectAsState()
+                
                 AnimatedVisibility(
                     visible = true,
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
-                    if (mission != null) {
+                    if (draftMission != null) {
+                        DraftReviewPanel(
+                            draftMission = draftMission!!,
+                            isLoading = isDraftLoading,
+                            onRegenerate = { instructions -> viewModel.regenerateDraft(instructions) },
+                            onAccept = { viewModel.confirmDraft() },
+                            onCancel = { viewModel.cancelDraft() }
+                        )
+                    } else if (mission != null) {
                         ActiveMissionCard(
                             mission = mission,
                             onStartAction = { actionId ->
@@ -102,8 +114,12 @@ fun HomeScreen(
                         )
                     } else {
                         CreateMissionPanel(
+                            recentMissions = recentMissions,
                             onCreateMission = { title, duration ->
-                                viewModel.startNewMission(title, duration)
+                                viewModel.startNewMissionDraft(title, duration)
+                            },
+                            onReuseMission = { historicalMission ->
+                                viewModel.reuseHistoricalMission(historicalMission)
                             }
                         )
                     }
@@ -252,7 +268,9 @@ fun ActiveMissionCard(
  */
 @Composable
 fun CreateMissionPanel(
-    onCreateMission: (String, Int) -> Unit
+    recentMissions: List<Mission>,
+    onCreateMission: (String, Int) -> Unit,
+    onReuseMission: (Mission) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
     var durationMinutes by remember { mutableIntStateOf(15) }
@@ -384,6 +402,163 @@ fun CreateMissionPanel(
                         )
                     }
                 }
+            }
+        }
+
+        if (recentMissions.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(32.dp))
+            Text(
+                text = "🕰️ 从历史记录快速开始",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            recentMissions.forEach { history ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable { onReuseMission(history) },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = history.title,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "${history.durationMinutes} 分钟",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "➔",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DraftReviewPanel(
+    draftMission: Mission,
+    isLoading: Boolean,
+    onRegenerate: (String) -> Unit,
+    onAccept: () -> Unit,
+    onCancel: () -> Unit
+) {
+    var extraInstructions by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "✨ AI 规划草案",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = "对于“${draftMission.title}”，AI 建议如下分解：",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+            textAlign = TextAlign.Center
+        )
+
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    draftMission.actions.forEachIndexed { index, action ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${index + 1}. ${action.title}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = "${action.durationMinutes}m",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                        if (index < draftMission.actions.size - 1) {
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        }
+                    }
+                }
+            }
+            
+            OutlinedTextField(
+                value = extraInstructions,
+                onValueChange = { extraInstructions = it },
+                label = { Text("不满意？告诉 AI 你的具体要求") },
+                placeholder = { Text("例如：我只有10分钟，请精简") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = { onRegenerate(extraInstructions) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("🔄 重新生成")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onAccept,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text("✅ 确认并开始行动", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = onCancel,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("❌ 放弃计划")
             }
         }
     }

@@ -13,6 +13,7 @@ import io.mockk.slot
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -61,7 +62,16 @@ class LocalSplitTest {
             )
         } returns Unit
 
-        viewModel.startNewMission("写一封简短邮件", 5)
+        viewModel.startNewMissionDraft("写一封简短邮件", 5)
+
+        val draft = viewModel.draftMission.first { it != null }!!
+        assertEquals("写一封简短邮件", draft.title)
+        assertEquals(5, draft.durationMinutes)
+        assertEquals(1, draft.actions.size)
+        assertEquals("立即开始行动: 写一封简短邮件", draft.actions[0].title)
+        assertEquals(5, draft.actions[0].durationMinutes)
+
+        viewModel.confirmDraft()
 
         assertEquals("写一封简短邮件", titleSlot.captured)
         assertEquals(5, durationSlot.captured)
@@ -99,9 +109,10 @@ class LocalSplitTest {
             )
         } returns Unit
 
-        viewModel.startNewMission("完成月度财务表", 15)
+        viewModel.startNewMissionDraft("完成月度财务表", 15)
 
-        val actions = actionsSlot.captured
+        val draft = viewModel.draftMission.first { it != null }!!
+        val actions = draft.actions
         // 15分钟本地自动分配为：
         // 1. 准备工作：打开相关工具/软件 (2分钟)
         // 2. 开展第 1 步行动：处理分项内容 (5分钟)
@@ -119,5 +130,8 @@ class LocalSplitTest {
         assertEquals(3, actions[3].durationMinutes)
         assertEquals("整理结果，存盘/保存并关闭", actions[4].title)
         assertEquals(2, actions[4].durationMinutes)
+
+        viewModel.confirmDraft()
+        assertEquals(5, actionsSlot.captured.size)
     }
 }
