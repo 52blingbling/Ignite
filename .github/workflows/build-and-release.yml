@@ -1,0 +1,93 @@
+name: Android CI/CD Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 拉取源代码 (Checkout Source Code)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 配置 JDK 17 (Set up JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: 赋予 gradlew 执行权限 (Grant Execute Permission)
+        run: chmod +x gradlew
+
+      - name: 运行单元测试 (Run JVM Unit Tests)
+        run: ./gradlew test --continue --stacktrace
+
+      - name: 执行 Gradle 编译调试版 APK (Build Debug APK)
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: 上传构建产物 (Upload Debug APK Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: efa-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: 拉取源代码 (Checkout Source Code)
+        uses: actions/checkout@v4
+
+      - name: 配置 JDK 17 (Set up JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: 赋予 gradlew 执行权限 (Grant Execute Permission)
+        run: chmod +x gradlew
+
+      - name: 执行编译打包 (Build Release APK)
+        run: ./gradlew assembleDebug
+
+      - name: 自动发布 GitHub Release (Create GitHub Release)
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/apk/debug/app-debug.apk
+          name: EFA Release ${{ github.ref_name }}
+          body: |
+            ## EFA (Executive Function Assistant) Release ${{ github.ref_name }}
+            
+            这是由 GitHub Actions 自动化编译生成的执行功能助手 (EFA) 预发测试版本 APK 安装包。
+            
+            ### 自动化交付日志：
+            - 构建触发源：Push Tag `${{ github.ref }}`
+            - 构建环境：Ubuntu-Latest + JDK 17
+            - 交付产物：app-debug.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
