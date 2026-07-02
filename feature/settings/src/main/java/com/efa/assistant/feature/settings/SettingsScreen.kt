@@ -255,7 +255,7 @@ fun SettingsScreen(
                         OutlinedButton(
                             onClick = {
                                 viewModel.exportData(fmt) { content ->
-                                    val clip = ClipData.newPlainText("EFA_Backup_${fmt}", content)
+                                    val clip = ClipData.newPlainText("启程_Backup_${fmt}", content)
                                     clipboardManager.setPrimaryClip(clip)
                                     Toast.makeText(context, "${fmt} 数据已复制到剪贴板，您可以粘贴保存！", Toast.LENGTH_LONG).show()
                                 }

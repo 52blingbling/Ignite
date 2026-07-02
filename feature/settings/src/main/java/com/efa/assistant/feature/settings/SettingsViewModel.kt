@@ -107,7 +107,7 @@ class SettingsViewModel @Inject constructor(
                 }
                 "MARKDOWN" -> {
                     val md = StringBuilder()
-                    md.append("# EFA 专注成长日志\n\n")
+                    md.append("# 启程 专注成长日志\n\n")
                     md.append("导出的历史任务统计摘要如下：\n\n")
                     missionsList.forEach { item ->
                         val status = if (item.mission.isCompleted) "✅ 已完成" else "⏳ 进行中"
