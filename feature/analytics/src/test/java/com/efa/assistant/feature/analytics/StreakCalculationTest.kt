@@ -10,8 +10,13 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.resetMain
+import org.junit.Before
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -30,6 +35,16 @@ class StreakCalculationTest {
         override fun default(): CoroutineDispatcher = testDispatcher
     }
 
+    @Before
+    fun setup() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
     private val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     private val dayMillis = 24 * 3600 * 1000L
 
@@ -45,7 +60,7 @@ class StreakCalculationTest {
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(emptyList())
 
         val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
-        val state = viewModel.metricsState.first { it is UiState.Success }
+        val state = viewModel.metricsState.first { it !is UiState.Loading }
 
         assertTrue(state is UiState.Success)
         val metrics = (state as UiState.Success).data
@@ -74,7 +89,7 @@ class StreakCalculationTest {
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(mockRecords)
 
         val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
-        val state = viewModel.metricsState.first { it is UiState.Success }
+        val state = viewModel.metricsState.first { it !is UiState.Loading }
 
         assertTrue(state is UiState.Success)
         val metrics = (state as UiState.Success).data
@@ -102,7 +117,7 @@ class StreakCalculationTest {
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(mockRecords)
 
         val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
-        val state = viewModel.metricsState.first { it is UiState.Success }
+        val state = viewModel.metricsState.first { it !is UiState.Loading }
 
         assertTrue(state is UiState.Success)
         val metrics = (state as UiState.Success).data
@@ -131,7 +146,7 @@ class StreakCalculationTest {
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(mockRecords)
 
         val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
-        val state = viewModel.metricsState.first { it is UiState.Success }
+        val state = viewModel.metricsState.first { it !is UiState.Loading }
 
         assertTrue(state is UiState.Success)
         val metrics = (state as UiState.Success).data
