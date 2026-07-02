@@ -36,7 +36,7 @@ dependencies {
     implementation(project(":core:database"))
     implementation(project(":core:ai"))
 
-    implementation(libs.androidx.core-ktx)
+    implementation(libs.androidx.core.ktx)
     
     // Compose BOM & UI
     implementation(platform(libs.compose.bom))
@@ -50,12 +50,12 @@ dependencies {
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.hilt.navigation-compose)
+    implementation(libs.hilt.navigation.compose)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso-core)
+    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))
-    androidTestImplementation(libs.compose.ui.test-junit4)
+    androidTestImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.tooling)
 }

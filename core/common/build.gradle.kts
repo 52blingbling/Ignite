@@ -27,13 +27,13 @@ android {
 dependencies {
     implementation(project(":core:model"))
 
-    implementation(libs.androidx.core-ktx)
-    implementation(libs.kotlinx.coroutines-android)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.kotlinx.coroutines.android)
 
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines-test)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

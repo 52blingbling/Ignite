@@ -28,15 +28,15 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:common"))
 
-    implementation(libs.androidx.core-ktx)
+    implementation(libs.androidx.core.ktx)
 
     // 网络与 JSON 处理
     implementation(libs.retrofit.core)
-    implementation(libs.retrofit.converter-gson)
-    implementation(libs.okhttp.logging-interceptor)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp.logging.interceptor)
 
     // 安全加密存储 (用于 API Key)
-    implementation(libs.androidx.security-crypto)
+    implementation(libs.androidx.security.crypto)
 
     // Hilt
     implementation(libs.hilt.android)
@@ -44,5 +44,5 @@ dependencies {
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso-core)
+    androidTestImplementation(libs.androidx.espresso.core)
 }

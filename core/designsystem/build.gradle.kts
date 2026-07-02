@@ -32,7 +32,7 @@ dependencies {
     implementation(project(":core:common"))
     implementation(project(":core:model"))
 
-    implementation(libs.androidx.core-ktx)
+    implementation(libs.androidx.core.ktx)
     
     // Compose BOM & UI
     implementation(platform(libs.compose.bom))
@@ -47,8 +47,8 @@ dependencies {
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso-core)
+    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))
-    androidTestImplementation(libs.compose.ui.test-junit4)
+    androidTestImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.tooling)
 }

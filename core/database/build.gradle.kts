@@ -33,7 +33,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:common"))
 
-    implementation(libs.androidx.core-ktx)
+    implementation(libs.androidx.core.ktx)
 
     // Room Database
     implementation(libs.room.runtime)
@@ -46,5 +46,5 @@ dependencies {
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso-core)
+    androidTestImplementation(libs.androidx.espresso.core)
 }

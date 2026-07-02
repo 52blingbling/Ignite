@@ -58,8 +58,8 @@ android {
 dependencies {
     // AndroidX & Compose 核心依赖
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime-ktx)
-    implementation(libs.androidx.activity-compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
     
     // Compose BOM & UI
     implementation(platform(libs.compose.bom))
@@ -73,10 +73,10 @@ dependencies {
     // Hilt 依赖注入
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.hilt.navigation-compose)
+    implementation(libs.hilt.navigation.compose)
 
     // WorkManager 后台任务
-    implementation(libs.androidx.work-runtime-ktx)
+    implementation(libs.androidx.work.runtime.ktx)
 
     // 依赖的所有子模块
     implementation(project(":core:model"))
@@ -93,9 +93,9 @@ dependencies {
     // 测试依赖
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso-core)
+    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))
-    androidTestImplementation(libs.compose.ui.test-junit4)
+    androidTestImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.tooling)
-    debugImplementation(libs.compose.ui.test-manifest)
+    debugImplementation(libs.compose.ui.test.manifest)
 }
