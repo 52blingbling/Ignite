@@ -24,8 +24,8 @@ interface AIProvider {
      */
     suspend fun splitTask(
         missionTitle: String,
-        extraInstructions: String = "",
-        promptManager: PromptManager
+        promptManager: PromptManager,
+        extraInstructions: String = ""
     ): List<Action> {
         val instructions = if (extraInstructions.isNotBlank()) "用户附加需求：$extraInstructions" else ""
         val prompt = promptManager.getPrompt(PromptType.TASK_SPLIT, mapOf(

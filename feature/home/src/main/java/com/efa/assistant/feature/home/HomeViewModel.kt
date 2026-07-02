@@ -80,7 +80,7 @@ class HomeViewModel @Inject constructor(
 
                 val actions = if (isAiConfigured) {
                     try {
-                        aiProvider.splitTask(title, extraInstructions, promptManager)
+                        aiProvider.splitTask(title, promptManager, extraInstructions)
                     } catch (e: Exception) {
                         e.printStackTrace()
                         // 网络故障、API 超时或 Key 失效时，温和降级至本地拆分引擎
