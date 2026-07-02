@@ -1,5 +1,7 @@
 package com.efa.assistant.feature.analytics
 
+import com.efa.assistant.core.ai.AIProvider
+import com.efa.assistant.core.ai.PromptManager
 import com.efa.assistant.core.common.DispatcherProvider
 import com.efa.assistant.core.common.UiState
 import com.efa.assistant.core.model.FocusRecord
@@ -35,6 +37,9 @@ class StreakCalculationTest {
         override fun default(): CoroutineDispatcher = testDispatcher
     }
 
+    private val mockAiProvider = mockk<AIProvider>(relaxed = true)
+    private val mockPromptManager = mockk<PromptManager>(relaxed = true)
+
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
@@ -59,7 +64,7 @@ class StreakCalculationTest {
         every { mockRepo.getMostProcrastinatedMissions() } returns flowOf(emptyList())
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(emptyList())
 
-        val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
+        val viewModel = AnalyticsViewModel(mockRepo, mockAiProvider, mockPromptManager, testDispatcherProvider)
         val state = viewModel.metricsState.first { it !is UiState.Loading }
 
         assertTrue(state is UiState.Success)
@@ -88,7 +93,7 @@ class StreakCalculationTest {
         every { mockRepo.getMostProcrastinatedMissions() } returns flowOf(emptyList())
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(mockRecords)
 
-        val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
+        val viewModel = AnalyticsViewModel(mockRepo, mockAiProvider, mockPromptManager, testDispatcherProvider)
         val state = viewModel.metricsState.first { it !is UiState.Loading }
 
         assertTrue(state is UiState.Success)
@@ -116,7 +121,7 @@ class StreakCalculationTest {
         every { mockRepo.getMostProcrastinatedMissions() } returns flowOf(emptyList())
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(mockRecords)
 
-        val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
+        val viewModel = AnalyticsViewModel(mockRepo, mockAiProvider, mockPromptManager, testDispatcherProvider)
         val state = viewModel.metricsState.first { it !is UiState.Loading }
 
         assertTrue(state is UiState.Success)
@@ -145,7 +150,7 @@ class StreakCalculationTest {
         every { mockRepo.getMostProcrastinatedMissions() } returns flowOf(emptyList())
         every { mockRepo.getFocusRecordsSince(any()) } returns flowOf(mockRecords)
 
-        val viewModel = AnalyticsViewModel(mockRepo, testDispatcherProvider)
+        val viewModel = AnalyticsViewModel(mockRepo, mockAiProvider, mockPromptManager, testDispatcherProvider)
         val state = viewModel.metricsState.first { it !is UiState.Loading }
 
         assertTrue(state is UiState.Success)

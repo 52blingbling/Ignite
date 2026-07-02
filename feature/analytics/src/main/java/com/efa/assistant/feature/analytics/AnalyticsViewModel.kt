@@ -2,6 +2,9 @@ package com.efa.assistant.feature.analytics
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.efa.assistant.core.ai.AIProvider
+import com.efa.assistant.core.ai.PromptManager
+import com.efa.assistant.core.ai.PromptType
 import com.efa.assistant.core.common.DispatcherProvider
 import com.efa.assistant.core.common.UiState
 import com.efa.assistant.core.common.stateInViewModel
@@ -43,6 +46,8 @@ data class BehaviorMetrics(
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
     private val analyticsRepository: AnalyticsRepository,
+    private val aiProvider: AIProvider,
+    private val promptManager: PromptManager,
     private val dispatcherProvider: DispatcherProvider
 ) : ViewModel() {
 
@@ -162,5 +167,35 @@ class AnalyticsViewModel @Inject constructor(
             }
         }
         return streak
+    }
+
+    private val _aiInsightsState = MutableStateFlow<UiState<String>>(UiState.Loading)
+    val aiInsightsState = _aiInsightsState.asStateFlow()
+
+    fun generateWeeklyInsights() {
+        val currentMetrics = (metricsState.value as? UiState.Success)?.data ?: return
+        
+        viewModelScope.launch(dispatcherProvider.io()) {
+            _aiInsightsState.value = UiState.Loading
+            try {
+                val totalFocusTime = currentMetrics.recentDailyStats.sumOf { it.focusMinutes }
+                val procrastinatedTitles = currentMetrics.mostProcrastinated.joinToString(", ") { it.title }.takeIf { it.isNotBlank() } ?: "无"
+                
+                val params = mapOf(
+                    "start_count" to currentMetrics.totalStartCount.toString(),
+                    "focus_time" to totalFocusTime.toString(),
+                    "longest_focus" to currentMetrics.longestFocusMinutes.toString(),
+                    "best_hour" to (currentMetrics.bestWorkingHour?.toString() ?: "暂无"),
+                    "procrastinated_tasks" to procrastinatedTitles
+                )
+                
+                val prompt = promptManager.getPrompt(PromptType.WEEKLY_REPORT, params)
+                val response = aiProvider.generateText(prompt)
+                _aiInsightsState.value = UiState.Success(response)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _aiInsightsState.value = UiState.Error(e)
+            }
+        }
     }
 }

@@ -21,6 +21,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,6 +52,7 @@ fun AnalyticsScreen(
     viewModel: AnalyticsViewModel = hiltViewModel()
 ) {
     val state by viewModel.metricsState.collectAsState()
+    val aiInsightsState by viewModel.aiInsightsState.collectAsState()
 
     // 页面进入时触发一次完成率更新
     LaunchedEffect(Unit) {
@@ -98,6 +101,13 @@ fun AnalyticsScreen(
 
                     // 4. Procrastinated Tasks 分析
                     ProcrastinationAnalysisList(missions = data.mostProcrastinated)
+
+                    // 5. AI 深度复盘模块
+                    AIInsightsCard(
+                        aiInsightsState = aiInsightsState,
+                        onGenerateClick = { viewModel.generateWeeklyInsights() }
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
         }
@@ -372,5 +382,69 @@ private fun mapDayOfWeek(day: Int): String {
         6 -> "六"
         7 -> "日"
         else -> ""
+    }
+}
+
+@Composable
+fun AIInsightsCard(
+    aiInsightsState: UiState<String>,
+    onGenerateClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(
+                onClick = onGenerateClick,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "✨ AI 深度复盘",
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            when (aiInsightsState) {
+                is UiState.Loading -> {
+                    Text(
+                        text = "点击上方按钮生成私人周报",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                is UiState.Error -> {
+                    Text(
+                        text = "生成失败，请检查是否在设置中配置了有效的 API Key。\n错误信息：${aiInsightsState.message}",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                is UiState.Success -> {
+                    Text(
+                        text = aiInsightsState.data,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 22.sp,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
     }
 }
