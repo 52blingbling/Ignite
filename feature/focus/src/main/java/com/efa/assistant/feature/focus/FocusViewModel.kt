@@ -7,6 +7,8 @@ import com.efa.assistant.core.model.Action
 import com.efa.assistant.core.model.Mission
 import com.efa.assistant.core.model.repository.AnalyticsRepository
 import com.efa.assistant.core.model.repository.MissionRepository
+import com.efa.assistant.feature.focus.audio.NoiseSynthesizer
+import com.efa.assistant.feature.focus.audio.NoiseType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -38,7 +40,20 @@ class FocusViewModel @Inject constructor(
     private val _showWaterReminder = MutableStateFlow(false)
     val showWaterReminder: StateFlow<Boolean> = _showWaterReminder.asStateFlow()
 
+    // 氛围白噪音状态
+    private val _activeNoiseType = MutableStateFlow(NoiseType.NONE)
+    val activeNoiseType: StateFlow<NoiseType> = _activeNoiseType.asStateFlow()
+
+    // 严格模式开关与失败状态
+    private val _isStrictMode = MutableStateFlow(false)
+    val isStrictMode: StateFlow<Boolean> = _isStrictMode.asStateFlow()
+
+    private val _isDistractedFailed = MutableStateFlow(false)
+    val isDistractedFailed: StateFlow<Boolean> = _isDistractedFailed.asStateFlow()
+
+    private val noiseSynthesizer = NoiseSynthesizer(dispatcherProvider.default())
     private var timerJob: Job? = null
+    private var distractionJob: Job? = null
     
     // 跟踪单次打开此页面的总专注时长，用于 Hyperfocus 检测
     private var totalFocusedSecondsThisSession = 0L
@@ -62,9 +77,11 @@ class FocusViewModel @Inject constructor(
     private fun startTimer() {
         timerJob?.cancel()
         _isRunning.value = true
+        startNoiseIfEnabled()
         timerJob = viewModelScope.launch(dispatcherProvider.main()) {
-            while (_timeLeftSeconds.value > 0 && _isRunning.value) {
+            while (_isRunning.value) {
                 delay(1000)
+                // 弹性计时 (Flow State): 允许倒计时减到负数（代表心流溢出），不自动结束
                 _timeLeftSeconds.value -= 1
                 totalFocusedSecondsThisSession += 1
 
@@ -73,18 +90,17 @@ class FocusViewModel @Inject constructor(
                     _showWaterReminder.value = true
                 }
             }
-            if (_timeLeftSeconds.value == 0L) {
-                _isRunning.value = false
-            }
         }
     }
 
     fun pauseTimer() {
         _isRunning.value = false
         timerJob?.cancel()
+        stopNoise()
     }
 
     fun resumeTimer() {
+        if (_isDistractedFailed.value) return // 已经开小差判定失败，不允许继续
         startTimer()
     }
 
@@ -92,6 +108,65 @@ class FocusViewModel @Inject constructor(
         _showWaterReminder.value = false
         // 重置会话累计，以便在下个 90 分钟再次提醒
         totalFocusedSecondsThisSession = 0L
+    }
+
+    // 设置白噪音类型
+    fun setNoiseType(type: NoiseType) {
+        _activeNoiseType.value = type
+        if (_isRunning.value) {
+            noiseSynthesizer.start(type)
+        } else {
+            noiseSynthesizer.stop()
+        }
+    }
+
+    // 设置严格模式
+    fun setStrictMode(enabled: Boolean) {
+        _isStrictMode.value = enabled
+    }
+
+    // 监控应用退到后台 (严格模式)
+    fun onAppBackgrounded() {
+        if (!_isStrictMode.value || !_isRunning.value || _isDistractedFailed.value) return
+        distractionJob?.cancel()
+        distractionJob = viewModelScope.launch(dispatcherProvider.main()) {
+            delay(10000) // 10秒宽限期
+            failSessionDueToDistraction()
+        }
+    }
+
+    // 监控应用回到前台 (清除开小差判定计时)
+    fun onAppForegrounded() {
+        distractionJob?.cancel()
+        distractionJob = null
+    }
+
+    private fun failSessionDueToDistraction() {
+        pauseTimer()
+        stopNoise()
+        _isDistractedFailed.value = true
+
+        val currentMission = _mission.value ?: return
+        val currentAction = _action.value ?: return
+        viewModelScope.launch(dispatcherProvider.io()) {
+            val actualSeconds = originalDurationSeconds - _timeLeftSeconds.value
+            analyticsRepository.recordFocusSession(
+                missionId = currentMission.id,
+                actionId = currentAction.id,
+                durationSeconds = if (actualSeconds > 0) actualSeconds else 1,
+                isCompleted = false
+            )
+        }
+    }
+
+    private fun startNoiseIfEnabled() {
+        if (_activeNoiseType.value != NoiseType.NONE) {
+            noiseSynthesizer.start(_activeNoiseType.value)
+        }
+    }
+
+    private fun stopNoise() {
+        noiseSynthesizer.stop()
     }
 
     fun completeAction(onCompleted: () -> Unit) {
@@ -102,7 +177,7 @@ class FocusViewModel @Inject constructor(
         viewModelScope.launch(dispatcherProvider.io()) {
             // 标记行动完成
             missionRepository.updateActionCompletion(currentAction.id, true)
-            // 写入专注分析日志
+            // 写入专注分析日志（弹性计时：实际专注秒数 = 预设时长 - 剩余时长。如果剩余时长为负数，代表溢出，相减即为增加）
             val actualSeconds = originalDurationSeconds - _timeLeftSeconds.value
             analyticsRepository.recordFocusSession(
                 missionId = currentMission.id,
@@ -128,10 +203,11 @@ class FocusViewModel @Inject constructor(
         val currentMission = _mission.value
         val currentAction = _action.value
         viewModelScope.launch(dispatcherProvider.io()) {
-            if (currentMission != null && currentAction != null) {
+            // 如果还未被判定为开小差失败，才记录本次退出的正常打断数据
+            if (currentMission != null && currentAction != null && !_isDistractedFailed.value) {
                 val actualSeconds = originalDurationSeconds - _timeLeftSeconds.value
                 if (actualSeconds > 0) {
-                    // 即使未计满打断，也记录实际专注时间，保护用户的每一滴努力（No Shame，有记录即是收获）
+                    // 即使未计满打断，也记录实际专注时间，保护用户的每一滴努力（No Shame）
                     analyticsRepository.recordFocusSession(
                         missionId = currentMission.id,
                         actionId = currentAction.id,
@@ -149,5 +225,7 @@ class FocusViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
+        distractionJob?.cancel()
+        noiseSynthesizer.stop()
     }
 }
